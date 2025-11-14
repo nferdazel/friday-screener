@@ -5,6 +5,7 @@ Service ini menggunakan yfinance library untuk fetch data fundamental,
 harga, dan informasi lainnya dari Yahoo Finance API.
 """
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Dict, Optional
 import warnings
@@ -320,7 +321,7 @@ class YahooFinanceService:
         # Additional important fields (weight: 0.5 each)
         additional_fields = [
             valuation.forward_pe,
-            valuation.profit_margin,
+            profitability.profit_margin,
             profitability.operating_margin,
             cash_flow.free_cash_flow,
             dividend.dividend_yield,
@@ -357,22 +358,54 @@ class YahooFinanceService:
         logger.info("Cache cleared")
 
     def get_multiple_stocks(
-        self, tickers: list[str], use_cache: bool = True
+        self, tickers: list[str], use_cache: bool = True, max_workers: int = 5
     ) -> Dict[str, Optional[StockData]]:
         """
-        Fetch data untuk multiple stocks.
+        Fetch data untuk multiple stocks concurrently.
 
         Args:
             tickers: List of ticker symbols
             use_cache: Whether to use cached data
+            max_workers: Maximum number of concurrent threads
 
         Returns:
             Dictionary of {ticker: StockData}
         """
         results = {}
 
-        for ticker in tickers:
-            stock_data = self.get_stock_data(ticker, use_cache)
-            results[ticker] = stock_data
+        # If using cache, check what we already have
+        uncached_tickers = []
+        if use_cache:
+            for ticker in tickers:
+                normalized_ticker = normalize_ticker(ticker)
+                if normalized_ticker in self.cache:
+                    results[ticker] = self.cache[normalized_ticker]
+                else:
+                    uncached_tickers.append(ticker)
+        else:
+            uncached_tickers = tickers
+
+        # Fetch uncached data concurrently
+        if uncached_tickers:
+            logger.info(
+                f"Fetching {len(uncached_tickers)} stocks concurrently with {max_workers} workers"
+            )
+
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                # Submit all tasks
+                future_to_ticker = {
+                    executor.submit(self.get_stock_data, ticker, False): ticker
+                    for ticker in uncached_tickers
+                }
+
+                # Collect results as they complete
+                for future in as_completed(future_to_ticker):
+                    ticker = future_to_ticker[future]
+                    try:
+                        stock_data = future.result()
+                        results[ticker] = stock_data
+                    except Exception as e:
+                        logger.error(f"Failed to fetch data for {ticker}: {str(e)}")
+                        results[ticker] = None
 
         return results
