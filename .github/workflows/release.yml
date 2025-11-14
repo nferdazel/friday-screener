@@ -6,6 +6,9 @@ on:
       - 'v*'  # Trigger on version tags like v1.0.0
   workflow_dispatch:  # Allow manual trigger
 
+permissions:
+  contents: write  # Required for creating releases and uploading assets
+
 jobs:
   build:
     name: Build on ${{ matrix.os }}
@@ -76,78 +79,73 @@ jobs:
         with:
           path: artifacts
 
+      - name: Verify artifacts
+        run: |
+          echo "Verifying downloaded artifacts..."
+          ls -la artifacts/
+          ls -la artifacts/friday-screener-linux-amd64/ || echo "Linux artifact not found"
+          ls -la artifacts/friday-screener-windows-amd64.exe/ || echo "Windows artifact not found"
+          ls -la artifacts/friday-screener-macos-amd64/ || echo "macOS artifact not found"
+
+      - name: Extract version from tag
+        id: tag_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Tag version: $VERSION"
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          VERSION="${{ steps.tag_version.outputs.version }}"
+          cat > release_notes.md << EOF
+          # Friday Screener ${VERSION}
+
+          Stock screening tool untuk analisis fundamental emiten saham di Bursa Efek Indonesia.
+
+          ## Downloads
+
+          - **Windows**: \`friday-screener-windows-amd64.exe\`
+          - **Linux**: \`friday-screener-linux-amd64\`
+          - **macOS**: \`friday-screener-macos-amd64\`
+
+          ## What's Changed
+
+          See [CHANGELOG.md](CHANGELOG.md) for details.
+
+          ## Installation
+
+          1. Download the appropriate file for your OS
+          2. Make it executable (Linux/macOS): \`chmod +x friday-screener-*\`
+          3. Run: \`./friday-screener\` or \`friday-screener.exe\`
+
+          ## Usage
+
+          \`\`\`bash
+          # Interactive mode
+          ./friday-screener
+
+          # Screen single stock
+          ./friday-screener screen BBCA
+
+          # Compare stocks
+          ./friday-screener compare BBCA BMRI BBNI
+          \`\`\`
+
+          **Full documentation**: [README.md](README.md)
+          EOF
+
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          body: |
-            # Friday Screener ${{ github.ref_name }}
-
-            Stock screening tool untuk analisis fundamental emiten saham di Bursa Efek Indonesia.
-
-            ## Downloads
-
-            - **Windows**: `friday-screener-windows-amd64.exe`
-            - **Linux**: `friday-screener-linux-amd64`
-            - **macOS**: `friday-screener-macos-amd64`
-
-            ## What's Changed
-
-            See [CHANGELOG.md](CHANGELOG.md) for details.
-
-            ## Installation
-
-            1. Download the appropriate file for your OS
-            2. Make it executable (Linux/macOS): `chmod +x friday-screener-*`
-            3. Run: `./friday-screener` or `friday-screener.exe`
-
-            ## Usage
-
-            ```bash
-            # Interactive mode
-            ./friday-screener
-
-            # Screen single stock
-            ./friday-screener screen BBCA
-
-            # Compare stocks
-            ./friday-screener compare BBCA BMRI BBNI
-            ```
-
-            **Full documentation**: [README.md](README.md)
+          name: Release ${{ github.ref_name }}
+          body_path: release_notes.md
           draft: false
           prerelease: false
-
-      - name: Upload Linux binary
-        uses: actions/upload-release-asset@v1
+          files: |
+            artifacts/friday-screener-linux-amd64/friday-screener-linux
+            artifacts/friday-screener-windows-amd64.exe/friday-screener-windows.exe
+            artifacts/friday-screener-macos-amd64/friday-screener-macos
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/friday-screener-linux-amd64/friday-screener-linux
-          asset_name: friday-screener-linux-amd64
-          asset_content_type: application/octet-stream
-
-      - name: Upload Windows binary
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/friday-screener-windows-amd64.exe/friday-screener-windows.exe
-          asset_name: friday-screener-windows-amd64.exe
-          asset_content_type: application/octet-stream
-
-      - name: Upload macOS binary
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/friday-screener-macos-amd64/friday-screener-macos
-          asset_name: friday-screener-macos-amd64
-          asset_content_type: application/octet-stream
