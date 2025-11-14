@@ -109,7 +109,9 @@ class FundamentalAnalyzer:
         - PBV: Prefer ≤ 1, max < 2
         - Market Cap: Prefer besar (≥ 100T)
         """
-        score = CategoryScore(category="Valuation", score=0.0, weight=self.weights.valuation_weight)
+        score = CategoryScore(
+            category="Valuation", score=0.0, weight=self.weights.valuation_weight
+        )
         details = {}
 
         pe = stock_data.valuation.pe_ratio
@@ -135,7 +137,7 @@ class FundamentalAnalyzer:
                 result.add_weakness(
                     f"PE Ratio tinggi: {pe:.2f} (> {self.criteria.valuation.pe_ratio_max})"
                 )
-            details['pe_ratio'] = pe
+            details["pe_ratio"] = pe
         else:
             result.add_weakness("PE Ratio tidak tersedia")
 
@@ -155,8 +157,10 @@ class FundamentalAnalyzer:
                 )
             else:
                 score.score += 10
-                result.add_weakness(f"PBV tinggi: {pbv:.2f} (> {self.criteria.valuation.pbv_max})")
-            details['pbv'] = pbv
+                result.add_weakness(
+                    f"PBV tinggi: {pbv:.2f} (> {self.criteria.valuation.pbv_max})"
+                )
+            details["pbv"] = pbv
         else:
             result.add_weakness("PBV tidak tersedia")
 
@@ -176,10 +180,8 @@ class FundamentalAnalyzer:
                 )
             else:
                 score.score += 5
-                result.add_red_flag(
-                    "Market cap kecil - risiko likuiditas tinggi"
-                )
-            details['market_cap'] = market_cap
+                result.add_red_flag("Market cap kecil - risiko likuiditas tinggi")
+            details["market_cap"] = market_cap
         else:
             result.add_weakness("Market cap tidak tersedia")
 
@@ -201,7 +203,9 @@ class FundamentalAnalyzer:
         - Cash Flow: Harus positif
         """
         score = CategoryScore(
-            category="Profitability", score=0.0, weight=self.weights.profitability_weight
+            category="Profitability",
+            score=0.0,
+            weight=self.weights.profitability_weight,
         )
         details = {}
 
@@ -230,11 +234,11 @@ class FundamentalAnalyzer:
                     )
                 else:
                     score.score += 5
-                    result.add_red_flag(
-                        "EPS tidak menunjukkan pertumbuhan konsisten"
-                    )
-            details['eps_trend'] = 'growing' if is_growing_trend(eps_values) else 'declining'
-            details['eps_history'] = eps_history
+                    result.add_red_flag("EPS tidak menunjukkan pertumbuhan konsisten")
+            details["eps_trend"] = (
+                "growing" if is_growing_trend(eps_values) else "declining"
+            )
+            details["eps_history"] = eps_history
         else:
             result.add_weakness("Historical EPS data tidak cukup")
 
@@ -259,7 +263,7 @@ class FundamentalAnalyzer:
                 result.add_weakness(
                     f"Gross margin rendah: {gpm_pct:.1f}% (< {self.criteria.profitability.gpm_min}%)"
                 )
-            details['gross_margin'] = gpm_pct
+            details["gross_margin"] = gpm_pct
         else:
             result.add_weakness("Gross margin tidak tersedia")
 
@@ -284,7 +288,7 @@ class FundamentalAnalyzer:
                 result.add_weakness(
                     f"ROE rendah: {roe_pct:.1f}% (< {self.criteria.profitability.roe_min}%)"
                 )
-            details['roe'] = roe_pct
+            details["roe"] = roe_pct
         else:
             result.add_weakness("ROE tidak tersedia")
 
@@ -295,20 +299,20 @@ class FundamentalAnalyzer:
         if ocf is not None and ocf > 0:
             score.score += 10
             result.add_strength("Operating cash flow positif")
-            details['ocf_positive'] = True
+            details["ocf_positive"] = True
         elif ocf is not None:
             result.add_red_flag("Operating cash flow negatif - masalah arus kas")
-            details['ocf_positive'] = False
+            details["ocf_positive"] = False
         else:
             result.add_weakness("Operating cash flow tidak tersedia")
 
         if fcf is not None and fcf > 0:
             score.score += 10
             result.add_strength("Free cash flow positif")
-            details['fcf_positive'] = True
+            details["fcf_positive"] = True
         elif fcf is not None:
             result.add_weakness("Free cash flow negatif")
-            details['fcf_positive'] = False
+            details["fcf_positive"] = False
         else:
             result.add_weakness("Free cash flow tidak tersedia")
 
@@ -327,7 +331,9 @@ class FundamentalAnalyzer:
         - Debt-to-Equity: Prefer < 0.5, max < 1.0
         - Beta: Max 1.5
         """
-        score = CategoryScore(category="Risk", score=0.0, weight=self.weights.risk_weight)
+        score = CategoryScore(
+            category="Risk", score=0.0, weight=self.weights.risk_weight
+        )
         details = {}
 
         # Debt-to-Equity analysis (70 points)
@@ -352,7 +358,7 @@ class FundamentalAnalyzer:
                 result.add_red_flag(
                     f"Debt-to-Equity tinggi: {dte:.2f} - risiko leverage tinggi"
                 )
-            details['debt_to_equity'] = dte
+            details["debt_to_equity"] = dte
         else:
             result.add_weakness("Debt-to-Equity tidak tersedia")
 
@@ -364,7 +370,10 @@ class FundamentalAnalyzer:
                 result.add_strength(
                     f"Beta rendah: {beta:.2f} - volatilitas lebih rendah dari market"
                 )
-            elif beta <= self.criteria.risk.beta_max:
+            elif (
+                self.criteria.risk.beta_max is not None
+                and beta <= self.criteria.risk.beta_max
+            ):
                 score.score += 20
                 result.add_insight(
                     "Risk",
@@ -378,7 +387,7 @@ class FundamentalAnalyzer:
                 result.add_weakness(
                     f"Beta tinggi: {beta:.2f} - volatilitas lebih tinggi dari market"
                 )
-            details['beta'] = beta
+            details["beta"] = beta
         else:
             # Jika beta tidak ada, berikan score moderate
             score.score += 15
@@ -405,7 +414,9 @@ class FundamentalAnalyzer:
         - Dividend: Harus ada
         - Dividend Yield: Prefer ≥ 4%, min 2%
         """
-        score = CategoryScore(category="Dividend", score=0.0, weight=self.weights.dividend_weight)
+        score = CategoryScore(
+            category="Dividend", score=0.0, weight=self.weights.dividend_weight
+        )
         details = {}
 
         div_yield = stock_data.dividend.dividend_yield
@@ -415,9 +426,7 @@ class FundamentalAnalyzer:
 
             if div_yield_pct >= self.criteria.dividend.dividend_yield_preferred:
                 score.score += 100
-                result.add_strength(
-                    f"Dividend yield sangat baik: {div_yield_pct:.2f}%"
-                )
+                result.add_strength(f"Dividend yield sangat baik: {div_yield_pct:.2f}%")
             elif div_yield_pct >= self.criteria.dividend.dividend_yield_min:
                 score.score += 60
                 result.add_insight(
@@ -433,8 +442,8 @@ class FundamentalAnalyzer:
                     f"Dividend yield rendah: {div_yield_pct:.2f}% (< {self.criteria.dividend.dividend_yield_min}%)"
                 )
 
-            details['dividend_yield'] = div_yield_pct
-            details['has_dividend'] = True
+            details["dividend_yield"] = div_yield_pct
+            details["has_dividend"] = True
 
         else:
             # No dividend
@@ -445,7 +454,7 @@ class FundamentalAnalyzer:
                 score.score += 20
                 result.add_weakness("Tidak membayar dividen")
 
-            details['has_dividend'] = False
+            details["has_dividend"] = False
 
         score.details = details
         score.passed = score.score >= 40  # More lenient for dividend
@@ -482,20 +491,18 @@ class FundamentalAnalyzer:
             Dictionary of key metrics
         """
         return {
-            'pe_ratio': stock_data.valuation.pe_ratio,
-            'pbv': stock_data.valuation.price_to_book,
-            'market_cap': stock_data.valuation.market_cap,
-            'roe': stock_data.profitability.roe,
-            'gross_margin': stock_data.profitability.gross_margin,
-            'debt_to_equity': stock_data.leverage.debt_to_equity,
-            'dividend_yield': stock_data.dividend.dividend_yield,
-            'current_price': stock_data.price.current_price,
-            'eps': stock_data.profitability.eps,
+            "pe_ratio": stock_data.valuation.pe_ratio,
+            "pbv": stock_data.valuation.price_to_book,
+            "market_cap": stock_data.valuation.market_cap,
+            "roe": stock_data.profitability.roe,
+            "gross_margin": stock_data.profitability.gross_margin,
+            "debt_to_equity": stock_data.leverage.debt_to_equity,
+            "dividend_yield": stock_data.dividend.dividend_yield,
+            "current_price": stock_data.price.current_price,
+            "eps": stock_data.profitability.eps,
         }
 
-    def batch_analyze(
-        self, stocks_data: List[StockData]
-    ) -> List[ScreeningResult]:
+    def batch_analyze(self, stocks_data: List[StockData]) -> List[ScreeningResult]:
         """
         Analyze multiple stocks.
 

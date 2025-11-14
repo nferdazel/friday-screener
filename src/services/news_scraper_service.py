@@ -155,71 +155,54 @@ class NewsScraperService:
                 for item in news_data[: self.max_news]:
                     # Parse timestamp
                     published_date = None
-                    if 'providerPublishTime' in item:
+                    if "providerPublishTime" in item:
                         try:
                             published_date = datetime.fromtimestamp(
-                                item['providerPublishTime']
+                                item["providerPublishTime"]
                             )
                         except (ValueError, TypeError) as e:
                             logger.debug(f"Invalid timestamp for news item: {e}")
 
                     # Create NewsItem with validation
-                    title = item.get('title', '').strip()
+                    title = item.get("title", "").strip()
                     if not title:
                         continue  # Skip items with no title
-                        
+
                     news_item = NewsItem(
                         title=title,
-                        source=item.get('publisher', 'Yahoo Finance'),
+                        source=item.get("publisher", "Yahoo Finance"),
                         published_date=published_date,
-                        url=item.get('link'),
-                        summary=item.get('summary', '').strip()[:500],  # Limit summary length
+                        url=item.get("link"),
+                        summary=item.get("summary", "").strip()[
+                            :500
+                        ],  # Limit summary length
                         sentiment=self._analyze_sentiment(
-                            title + ' ' + (item.get('summary', '') or '')
+                            title + " " + (item.get("summary", "") or "")
                         ),
                     )
 
                     news_items.append(news_item)
 
-                logger.info(f"Successfully fetched {len(news_items)} news items for {ticker}")
+                logger.info(
+                    f"Successfully fetched {len(news_items)} news items for {ticker}"
+                )
                 break  # Success, exit retry loop
 
             except Exception as e:
-                logger.warning(f"Attempt {attempt + 1}/{max_retries} failed for {ticker}: {str(e)}")
-                
+                logger.warning(
+                    f"Attempt {attempt + 1}/{max_retries} failed for {ticker}: {str(e)}"
+                )
+
                 if attempt < max_retries - 1:
                     logger.debug(f"Retrying in {retry_delay} seconds...")
                     time.sleep(retry_delay)
                     retry_delay *= 2  # Exponential backoff
                 else:
-                    logger.error(f"Failed to fetch news for {ticker} after {max_retries} attempts")
+                    logger.error(
+                        f"Failed to fetch news for {ticker} after {max_retries} attempts"
+                    )
                     # Return empty list instead of raising exception
                     return []
-
-        return news_items
-
-            for item in news_data[: self.max_news]:
-                # Parse timestamp
-                published_date = None
-                if "providerPublishTime" in item:
-                    published_date = datetime.fromtimestamp(item["providerPublishTime"])
-
-                # Create NewsItem
-                news_item = NewsItem(
-                    title=item.get("title", ""),
-                    source=item.get("publisher", "Yahoo Finance"),
-                    published_date=published_date,
-                    url=item.get("link"),
-                    summary=item.get("summary"),
-                    sentiment=self._analyze_sentiment(
-                        item.get("title", "") + " " + item.get("summary", "")
-                    ),
-                )
-
-                news_items.append(news_item)
-
-        except Exception as e:
-            logger.error(f"Error fetching Yahoo Finance news: {str(e)}")
 
         return news_items
 
