@@ -1,7 +1,6 @@
 import logging
 import sys
 import warnings
-from typing import Optional
 
 try:
     import pandas as pd
@@ -9,9 +8,8 @@ except ImportError:
     pd = None
 
 
-def get_logger(name: str, level: Optional[int] = None) -> logging.Logger:
-    """
-    Get configured logger untuk aplikasi.
+def get_logger(name: str, level: int | None = None) -> logging.Logger:
+    """Get configured logger untuk aplikasi.
 
     Args:
         name: Logger name
@@ -19,6 +17,7 @@ def get_logger(name: str, level: Optional[int] = None) -> logging.Logger:
 
     Returns:
         Configured logger instance
+
     """
     # Allow environment variable to control log level
     if level is None:
@@ -62,11 +61,11 @@ def suppress_warnings():
 
 
 def set_log_level(level: str) -> None:
-    """
-    Set log level for all loggers.
+    """Set log level for all loggers.
 
     Args:
         level: Log level name (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+
     """
     log_level = getattr(logging, level.upper(), logging.WARNING)
     logging.getLogger("src").setLevel(log_level)

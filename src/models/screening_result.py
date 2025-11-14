@@ -1,5 +1,4 @@
-"""
-Model untuk hasil screening saham.
+"""Model untuk hasil screening saham.
 
 Model ini merepresentasikan hasil analisis dan screening dari sebuah emiten,
 termasuk score, rating, dan insights.
@@ -8,7 +7,7 @@ termasuk score, rating, dan insights.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class Rating(Enum):
@@ -43,7 +42,7 @@ class CategoryScore:
     max_score: float = 100.0
     weight: float = 0.0
     passed: bool = False
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -56,19 +55,19 @@ class ScreeningMetrics:
 
     # Category scores
     valuation_score: CategoryScore = field(
-        default_factory=lambda: CategoryScore("Valuation", 0.0)
+        default_factory=lambda: CategoryScore("Valuation", 0.0),
     )
     profitability_score: CategoryScore = field(
-        default_factory=lambda: CategoryScore("Profitability", 0.0)
+        default_factory=lambda: CategoryScore("Profitability", 0.0),
     )
     risk_score: CategoryScore = field(
-        default_factory=lambda: CategoryScore("Risk", 0.0)
+        default_factory=lambda: CategoryScore("Risk", 0.0),
     )
     dividend_score: CategoryScore = field(
-        default_factory=lambda: CategoryScore("Dividend", 0.0)
+        default_factory=lambda: CategoryScore("Dividend", 0.0),
     )
 
-    def get_all_category_scores(self) -> List[CategoryScore]:
+    def get_all_category_scores(self) -> list[CategoryScore]:
         """Get all category scores as list."""
         return [
             self.valuation_score,
@@ -86,13 +85,12 @@ class Insight:
     severity: str  # positive, negative, neutral, warning
     title: str
     description: str
-    impact: Optional[str] = None  # High, Medium, Low
+    impact: str | None = None  # High, Medium, Low
 
 
 @dataclass
 class ScreeningResult:
-    """
-    Complete result dari stock screening.
+    """Complete result dari stock screening.
 
     Model ini berisi semua hasil analisis, scoring, dan insights
     untuk sebuah emiten saham.
@@ -100,21 +98,21 @@ class ScreeningResult:
 
     ticker: str
     company_name: str
-    sector: Optional[str] = None
-    industry: Optional[str] = None
+    sector: str | None = None
+    industry: str | None = None
 
     # Screening results
     rating: Rating = Rating.INSUFFICIENT_DATA
     metrics: ScreeningMetrics = field(default_factory=ScreeningMetrics)
 
     # Insights and findings
-    insights: List[Insight] = field(default_factory=list)
-    red_flags: List[str] = field(default_factory=list)
-    strengths: List[str] = field(default_factory=list)
-    weaknesses: List[str] = field(default_factory=list)
+    insights: list[Insight] = field(default_factory=list)
+    red_flags: list[str] = field(default_factory=list)
+    strengths: list[str] = field(default_factory=list)
+    weaknesses: list[str] = field(default_factory=list)
 
     # Key metrics summary (untuk quick view)
-    key_metrics: Dict[str, Any] = field(default_factory=dict)
+    key_metrics: dict[str, Any] = field(default_factory=dict)
 
     # Metadata
     screened_at: datetime = field(default_factory=datetime.now)
@@ -126,7 +124,7 @@ class ScreeningResult:
         severity: str,
         title: str,
         description: str,
-        impact: Optional[str] = None,
+        impact: str | None = None,
     ) -> None:
         """Add new insight to the result."""
         insight = Insight(
@@ -150,11 +148,11 @@ class ScreeningResult:
         """Add weakness (area of concern)."""
         self.weaknesses.append(message)
 
-    def get_insights_by_category(self, category: str) -> List[Insight]:
+    def get_insights_by_category(self, category: str) -> list[Insight]:
         """Get all insights for a specific category."""
         return [i for i in self.insights if i.category == category]
 
-    def get_insights_by_severity(self, severity: str) -> List[Insight]:
+    def get_insights_by_severity(self, severity: str) -> list[Insight]:
         """Get all insights with specific severity."""
         return [i for i in self.insights if i.severity == severity]
 
@@ -163,8 +161,7 @@ class ScreeningResult:
         return self.rating in [Rating.STRONG, Rating.VERY_STRONG]
 
     def calculate_rating_from_score(self) -> Rating:
-        """
-        Calculate rating based on total score.
+        """Calculate rating based on total score.
 
         Score ranges:
         - 80-100: Very Strong (fundamentals sangat kuat)
@@ -177,14 +174,13 @@ class ScreeningResult:
 
         if score >= 80:
             return Rating.VERY_STRONG
-        elif score >= 60:
+        if score >= 60:
             return Rating.STRONG
-        elif score >= 40:
+        if score >= 40:
             return Rating.FAIR
-        elif score >= 20:
+        if score >= 20:
             return Rating.WEAK
-        else:
-            return Rating.VERY_WEAK
+        return Rating.VERY_WEAK
 
     def summary(self) -> str:
         """Get summary of screening result."""

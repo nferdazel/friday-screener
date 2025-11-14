@@ -1,5 +1,4 @@
-"""
-Data models untuk informasi saham dan data fundamental.
+"""Data models untuk informasi saham dan data fundamental.
 
 Model ini merepresentasikan data saham yang diambil dari berbagai sumber
 (Yahoo Finance, web scraping, dll).
@@ -7,7 +6,6 @@ Model ini merepresentasikan data saham yang diambil dari berbagai sumber
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional
 
 
 @dataclass
@@ -16,25 +14,25 @@ class CompanyInfo:
 
     ticker: str
     name: str
-    sector: Optional[str] = None
-    industry: Optional[str] = None
-    description: Optional[str] = None
-    website: Optional[str] = None
-    country: Optional[str] = None
+    sector: str | None = None
+    industry: str | None = None
+    description: str | None = None
+    website: str | None = None
+    country: str | None = None
 
 
 @dataclass
 class ValuationMetrics:
     """Metrik valuasi perusahaan."""
 
-    market_cap: Optional[float] = None
-    enterprise_value: Optional[float] = None
-    pe_ratio: Optional[float] = None  # Trailing PE
-    forward_pe: Optional[float] = None
-    peg_ratio: Optional[float] = None
-    price_to_book: Optional[float] = None  # PBV
-    price_to_sales: Optional[float] = None
-    shares_outstanding: Optional[float] = None
+    market_cap: float | None = None
+    enterprise_value: float | None = None
+    pe_ratio: float | None = None  # Trailing PE
+    forward_pe: float | None = None
+    peg_ratio: float | None = None
+    price_to_book: float | None = None  # PBV
+    price_to_sales: float | None = None
+    shares_outstanding: float | None = None
 
 
 @dataclass
@@ -42,73 +40,73 @@ class ProfitabilityMetrics:
     """Metrik profitabilitas dan pertumbuhan."""
 
     # Current metrics
-    revenue: Optional[float] = None
-    gross_profit: Optional[float] = None
-    operating_income: Optional[float] = None
-    net_income: Optional[float] = None
-    eps: Optional[float] = None  # Earnings Per Share
+    revenue: float | None = None
+    gross_profit: float | None = None
+    operating_income: float | None = None
+    net_income: float | None = None
+    eps: float | None = None  # Earnings Per Share
 
     # Margins (dalam desimal, e.g., 0.25 = 25%)
-    gross_margin: Optional[float] = None  # GPM
-    operating_margin: Optional[float] = None
-    profit_margin: Optional[float] = None
+    gross_margin: float | None = None  # GPM
+    operating_margin: float | None = None
+    profit_margin: float | None = None
 
     # Returns
-    roe: Optional[float] = None  # Return on Equity
-    roa: Optional[float] = None  # Return on Assets
-    roic: Optional[float] = None  # Return on Invested Capital
+    roe: float | None = None  # Return on Equity
+    roa: float | None = None  # Return on Assets
+    roic: float | None = None  # Return on Invested Capital
 
     # Historical EPS (5 tahun terakhir)
-    eps_history: Dict[int, float] = field(default_factory=dict)  # {year: eps}
+    eps_history: dict[int, float] = field(default_factory=dict)  # {year: eps}
 
 
 @dataclass
 class CashFlowMetrics:
     """Metrik cash flow."""
 
-    operating_cash_flow: Optional[float] = None
-    free_cash_flow: Optional[float] = None
-    capital_expenditure: Optional[float] = None
-    levered_free_cash_flow: Optional[float] = None
+    operating_cash_flow: float | None = None
+    free_cash_flow: float | None = None
+    capital_expenditure: float | None = None
+    levered_free_cash_flow: float | None = None
 
 
 @dataclass
 class LeverageMetrics:
     """Metrik leverage dan risiko."""
 
-    total_debt: Optional[float] = None
-    total_equity: Optional[float] = None
-    debt_to_equity: Optional[float] = None
-    current_ratio: Optional[float] = None
-    quick_ratio: Optional[float] = None
-    interest_coverage: Optional[float] = None
-    beta: Optional[float] = None  # Volatilitas relatif terhadap market
+    total_debt: float | None = None
+    total_equity: float | None = None
+    debt_to_equity: float | None = None
+    current_ratio: float | None = None
+    quick_ratio: float | None = None
+    interest_coverage: float | None = None
+    beta: float | None = None  # Volatilitas relatif terhadap market
 
 
 @dataclass
 class DividendMetrics:
     """Metrik dividen."""
 
-    dividend_rate: Optional[float] = None  # Annual dividend per share
-    dividend_yield: Optional[float] = None  # Dividend yield (%)
-    payout_ratio: Optional[float] = None  # Payout ratio
-    five_year_avg_dividend_yield: Optional[float] = None
-    dividend_history: List[Dict] = field(default_factory=list)  # Historical dividends
+    dividend_rate: float | None = None  # Annual dividend per share
+    dividend_yield: float | None = None  # Dividend yield (%)
+    payout_ratio: float | None = None  # Payout ratio
+    five_year_avg_dividend_yield: float | None = None
+    dividend_history: list[dict] = field(default_factory=list)  # Historical dividends
 
 
 @dataclass
 class PriceMetrics:
     """Metrik harga saham."""
 
-    current_price: Optional[float] = None
-    previous_close: Optional[float] = None
-    open_price: Optional[float] = None
-    day_high: Optional[float] = None
-    day_low: Optional[float] = None
-    fifty_two_week_high: Optional[float] = None
-    fifty_two_week_low: Optional[float] = None
-    volume: Optional[int] = None
-    avg_volume: Optional[int] = None
+    current_price: float | None = None
+    previous_close: float | None = None
+    open_price: float | None = None
+    day_high: float | None = None
+    day_low: float | None = None
+    fifty_two_week_high: float | None = None
+    fifty_two_week_low: float | None = None
+    volume: int | None = None
+    avg_volume: int | None = None
 
 
 @dataclass
@@ -117,16 +115,15 @@ class NewsItem:
 
     title: str
     source: str
-    published_date: Optional[datetime] = None
-    url: Optional[str] = None
-    summary: Optional[str] = None
-    sentiment: Optional[str] = None  # positive, negative, neutral
+    published_date: datetime | None = None
+    url: str | None = None
+    summary: str | None = None
+    sentiment: str | None = None  # positive, negative, neutral
 
 
 @dataclass
 class StockData:
-    """
-    Complete stock data model yang menggabungkan semua informasi.
+    """Complete stock data model yang menggabungkan semua informasi.
 
     Model ini adalah representasi lengkap dari sebuah emiten saham
     termasuk data fundamental, teknikal, dan berita.
@@ -144,12 +141,12 @@ class StockData:
     price: PriceMetrics = field(default_factory=PriceMetrics)
 
     # Additional info
-    news: List[NewsItem] = field(default_factory=list)
-    corporate_actions: List[NewsItem] = field(default_factory=list)
+    news: list[NewsItem] = field(default_factory=list)
+    corporate_actions: list[NewsItem] = field(default_factory=list)
 
     # Metadata
     last_updated: datetime = field(default_factory=datetime.now)
-    data_quality_score: Optional[float] = None  # 0-100, kualitas data yang tersedia
+    data_quality_score: float | None = None  # 0-100, kualitas data yang tersedia
 
     def get_ticker(self) -> str:
         """Get stock ticker symbol."""

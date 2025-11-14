@@ -1,5 +1,4 @@
-"""
-Service untuk mengambil data saham dari Yahoo Finance.
+"""Service untuk mengambil data saham dari Yahoo Finance.
 
 Service ini menggunakan yfinance library untuk fetch data fundamental,
 harga, dan informasi lainnya dari Yahoo Finance API.
@@ -7,7 +6,6 @@ harga, dan informasi lainnya dari Yahoo Finance API.
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from typing import Dict, Optional
 import warnings
 
 import yfinance as yf
@@ -37,13 +35,12 @@ class YahooFinanceService:
 
     def __init__(self):
         """Initialize Yahoo Finance service."""
-        self.cache: Dict[str, StockData] = {}
+        self.cache: dict[str, StockData] = {}
 
     def get_stock_data(
-        self, ticker: str, use_cache: bool = True
-    ) -> Optional[StockData]:
-        """
-        Fetch comprehensive stock data dari Yahoo Finance.
+        self, ticker: str, use_cache: bool = True,
+    ) -> StockData | None:
+        """Fetch comprehensive stock data dari Yahoo Finance.
 
         Args:
             ticker: Stock ticker symbol (akan dinormalisasi otomatis)
@@ -51,6 +48,7 @@ class YahooFinanceService:
 
         Returns:
             StockData object atau None jika fetch gagal
+
         """
         normalized_ticker = normalize_ticker(ticker)
 
@@ -81,12 +79,11 @@ class YahooFinanceService:
             return stock_data
 
         except Exception as e:
-            logger.error(f"Error fetching data for {normalized_ticker}: {str(e)}")
+            logger.error(f"Error fetching data for {normalized_ticker}: {e!s}")
             return None
 
     def _build_stock_data(self, stock: yf.Ticker, info: dict, ticker: str) -> StockData:
-        """
-        Build StockData object dari yfinance data.
+        """Build StockData object dari yfinance data.
 
         Args:
             stock: yfinance Ticker object
@@ -95,6 +92,7 @@ class YahooFinanceService:
 
         Returns:
             StockData object
+
         """
         # Company Info
         company_info = CompanyInfo(
@@ -157,7 +155,7 @@ class YahooFinanceService:
             dividend_yield=safe_float(info.get("dividendYield")),
             payout_ratio=safe_float(info.get("payoutRatio")),
             five_year_avg_dividend_yield=safe_float(
-                info.get("fiveYearAvgDividendYield")
+                info.get("fiveYearAvgDividendYield"),
             ),
         )
 
@@ -176,7 +174,7 @@ class YahooFinanceService:
 
         # Calculate data quality score
         data_quality = self._calculate_data_quality(
-            valuation, profitability, cash_flow, leverage, dividend
+            valuation, profitability, cash_flow, leverage, dividend,
         )
 
         # Build complete StockData
@@ -194,15 +192,15 @@ class YahooFinanceService:
 
         return stock_data
 
-    def _get_eps_history(self, stock: yf.Ticker) -> Dict[int, float]:
-        """
-        Get EPS history untuk 5 tahun terakhir.
+    def _get_eps_history(self, stock: yf.Ticker) -> dict[int, float]:
+        """Get EPS history untuk 5 tahun terakhir.
 
         Args:
             stock: yfinance Ticker object
 
         Returns:
             Dictionary dengan {year: eps}
+
         """
         eps_history = {}
 
@@ -211,7 +209,7 @@ class YahooFinanceService:
             earnings = stock.earnings
             if earnings is not None and not earnings.empty:
                 logger.debug(
-                    f"Earnings data available with columns: {earnings.columns.tolist()}"
+                    f"Earnings data available with columns: {earnings.columns.tolist()}",
                 )
 
                 # Try different possible column names
@@ -266,14 +264,14 @@ class YahooFinanceService:
                                 year_int = int(str(year)[:4])
 
                             net_income = safe_float(
-                                financials.loc[net_income_col, year]
+                                financials.loc[net_income_col, year],
                             )
                             if net_income is not None:
                                 eps = net_income / shares
                                 eps_history[year_int] = eps
 
                         logger.debug(
-                            f"EPS history calculated from financials: {eps_history}"
+                            f"EPS history calculated from financials: {eps_history}",
                         )
 
             # Method 3: Use trailing EPS as fallback for current year
@@ -285,7 +283,7 @@ class YahooFinanceService:
                     logger.debug(f"Using trailing EPS as fallback: {trailing_eps}")
 
         except Exception as e:
-            logger.warning(f"Could not fetch EPS history: {str(e)}")
+            logger.warning(f"Could not fetch EPS history: {e!s}")
 
         return eps_history
 
@@ -297,14 +295,14 @@ class YahooFinanceService:
         leverage: LeverageMetrics,
         dividend: DividendMetrics,
     ) -> float:
-        """
-        Calculate data quality score berdasarkan kelengkapan data.
+        """Calculate data quality score berdasarkan kelengkapan data.
 
         Args:
             Various metrics objects
 
         Returns:
             Score 0-100 indicating data completeness
+
         """
         # Critical fields for screening (weight: 1.0 each)
         critical_fields = [
@@ -358,10 +356,9 @@ class YahooFinanceService:
         logger.info("Cache cleared")
 
     def get_multiple_stocks(
-        self, tickers: list[str], use_cache: bool = True, max_workers: int = 5
-    ) -> Dict[str, Optional[StockData]]:
-        """
-        Fetch data untuk multiple stocks concurrently.
+        self, tickers: list[str], use_cache: bool = True, max_workers: int = 5,
+    ) -> dict[str, StockData | None]:
+        """Fetch data untuk multiple stocks concurrently.
 
         Args:
             tickers: List of ticker symbols
@@ -370,6 +367,7 @@ class YahooFinanceService:
 
         Returns:
             Dictionary of {ticker: StockData}
+
         """
         results = {}
 
@@ -388,7 +386,7 @@ class YahooFinanceService:
         # Fetch uncached data concurrently
         if uncached_tickers:
             logger.info(
-                f"Fetching {len(uncached_tickers)} stocks concurrently with {max_workers} workers"
+                f"Fetching {len(uncached_tickers)} stocks concurrently with {max_workers} workers",
             )
 
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -405,7 +403,7 @@ class YahooFinanceService:
                         stock_data = future.result()
                         results[ticker] = stock_data
                     except Exception as e:
-                        logger.error(f"Failed to fetch data for {ticker}: {str(e)}")
+                        logger.error(f"Failed to fetch data for {ticker}: {e!s}")
                         results[ticker] = None
 
         return results

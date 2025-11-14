@@ -1,11 +1,8 @@
-"""
-Fundamental Analyzer untuk screening saham berdasarkan kriteria fundamental.
+"""Fundamental Analyzer untuk screening saham berdasarkan kriteria fundamental.
 
 Analyzer ini melakukan analisis komprehensif terhadap data fundamental saham
 dan menghasilkan scoring serta rekomendasi berdasarkan kriteria yang ditentukan.
 """
-
-from typing import List
 
 from src.config.settings import (
     DEFAULT_CRITERIA,
@@ -24,6 +21,14 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+# Scoring constants
+PASSING_SCORE_THRESHOLD = 50.0
+MIN_POSITIVE_YEARS = 3
+EPS_GROWTH_RECENT_YEARS = 2
+MIN_COMPARISON_TICKERS = 2
+DIVIDEND_PASSING_THRESHOLD = 40.0
+MIN_EPS_HISTORY_YEARS = 2
+
 
 class FundamentalAnalyzer:
     """Analyzer untuk fundamental screening."""
@@ -32,26 +37,26 @@ class FundamentalAnalyzer:
         self,
         criteria: ScreeningCriteria = DEFAULT_CRITERIA,
         weights: ScoringWeights = DEFAULT_WEIGHTS,
-    ):
-        """
-        Initialize fundamental analyzer.
+    ) -> None:
+        """Initialize fundamental analyzer.
 
         Args:
             criteria: Screening criteria thresholds
             weights: Scoring weights untuk setiap kategori
+
         """
         self.criteria = criteria
         self.weights = weights
 
     def analyze(self, stock_data: StockData) -> ScreeningResult:
-        """
-        Perform complete fundamental analysis.
+        """Perform complete fundamental analysis.
 
         Args:
             stock_data: StockData object dengan data fundamental
 
         Returns:
             ScreeningResult dengan scoring dan insights
+
         """
         logger.info(f"Analyzing {stock_data.get_ticker()}...")
 
@@ -68,16 +73,17 @@ class FundamentalAnalyzer:
         if not stock_data.has_complete_data():
             logger.warning(
                 f"Incomplete data for {stock_data.get_ticker()}, "
-                f"quality score: {stock_data.data_quality_score}"
+                f"quality score: {stock_data.data_quality_score}",
             )
             result.add_red_flag(
-                "Data tidak lengkap - beberapa metrik fundamental tidak tersedia"
+                "Data tidak lengkap - beberapa metrik fundamental tidak tersedia",
             )
 
         # Analyze each category
         result.metrics.valuation_score = self._analyze_valuation(stock_data, result)
         result.metrics.profitability_score = self._analyze_profitability(
-            stock_data, result
+            stock_data,
+            result,
         )
         result.metrics.risk_score = self._analyze_risk(stock_data, result)
         result.metrics.dividend_score = self._analyze_dividend(stock_data, result)
@@ -93,16 +99,17 @@ class FundamentalAnalyzer:
 
         logger.info(
             f"Analysis complete for {stock_data.get_ticker()}: "
-            f"Score={result.metrics.total_score:.1f}, Rating={result.rating.value}"
+            f"Score={result.metrics.total_score:.1f}, Rating={result.rating.value}",
         )
 
         return result
 
     def _analyze_valuation(
-        self, stock_data: StockData, result: ScreeningResult
+        self,
+        stock_data: StockData,
+        result: ScreeningResult,
     ) -> CategoryScore:
-        """
-        Analyze valuation metrics.
+        """Analyze valuation metrics.
 
         Kriteria:
         - PE Ratio: Prefer ≤ 5, max < 15
@@ -110,7 +117,9 @@ class FundamentalAnalyzer:
         - Market Cap: Prefer besar (≥ 100T)
         """
         score = CategoryScore(
-            category="Valuation", score=0.0, weight=self.weights.valuation_weight
+            category="Valuation",
+            score=0.0,
+            weight=self.weights.valuation_weight,
         )
         details = {}
 
@@ -135,7 +144,7 @@ class FundamentalAnalyzer:
             else:
                 score.score += 10
                 result.add_weakness(
-                    f"PE Ratio tinggi: {pe:.2f} (> {self.criteria.valuation.pe_ratio_max})"
+                    f"PE Ratio tinggi: {pe:.2f} (> {self.criteria.valuation.pe_ratio_max})",
                 )
             details["pe_ratio"] = pe
         else:
@@ -158,7 +167,7 @@ class FundamentalAnalyzer:
             else:
                 score.score += 10
                 result.add_weakness(
-                    f"PBV tinggi: {pbv:.2f} (> {self.criteria.valuation.pbv_max})"
+                    f"PBV tinggi: {pbv:.2f} (> {self.criteria.valuation.pbv_max})",
                 )
             details["pbv"] = pbv
         else:
@@ -186,15 +195,16 @@ class FundamentalAnalyzer:
             result.add_weakness("Market cap tidak tersedia")
 
         score.details = details
-        score.passed = score.score >= 50  # Pass jika score >= 50%
+        score.passed = score.score >= PASSING_SCORE_THRESHOLD
 
         return score
 
     def _analyze_profitability(
-        self, stock_data: StockData, result: ScreeningResult
+        self,
+        stock_data: StockData,
+        result: ScreeningResult,
     ) -> CategoryScore:
-        """
-        Analyze profitability and growth metrics.
+        """Analyze profitability and growth metrics.
 
         Kriteria:
         - EPS growth: Harus positif 5 tahun terakhir
@@ -211,30 +221,32 @@ class FundamentalAnalyzer:
 
         # EPS growth analysis (30 points)
         eps_history = stock_data.profitability.eps_history
-        if len(eps_history) >= 2:
+        if len(eps_history) >= MIN_EPS_HISTORY_YEARS:
             years = sorted(eps_history.keys())
             eps_values = [eps_history[year] for year in years]
 
             # Check if growing
-            if is_growing_trend(eps_values, min_positive_years=3):
+            if is_growing_trend(eps_values, min_positive_years=MIN_POSITIVE_YEARS):
                 score.score += 30
                 result.add_strength(
-                    f"EPS tumbuh konsisten dalam {len(eps_values)} tahun terakhir"
+                    f"EPS tumbuh konsisten dalam {len(eps_values)} tahun terakhir",
+                )
+            # Check for recent growth (last 2 years)
+            elif (
+                len(eps_values) >= EPS_GROWTH_RECENT_YEARS
+                and eps_values[-1] > eps_values[-2]
+            ):
+                score.score += 15
+                result.add_insight(
+                    "Profitability",
+                    "neutral",
+                    "EPS recovery",
+                    "EPS menunjukkan recovery di tahun terakhir",
+                    "Medium",
                 )
             else:
-                # Check for recent growth (last 2 years)
-                if len(eps_values) >= 2 and eps_values[-1] > eps_values[-2]:
-                    score.score += 15
-                    result.add_insight(
-                        "Profitability",
-                        "neutral",
-                        "EPS recovery",
-                        "EPS menunjukkan recovery di tahun terakhir",
-                        "Medium",
-                    )
-                else:
-                    score.score += 5
-                    result.add_red_flag("EPS tidak menunjukkan pertumbuhan konsisten")
+                score.score += 5
+                result.add_red_flag("EPS tidak menunjukkan pertumbuhan konsisten")
             details["eps_trend"] = (
                 "growing" if is_growing_trend(eps_values) else "declining"
             )
@@ -261,7 +273,7 @@ class FundamentalAnalyzer:
             else:
                 score.score += 5
                 result.add_weakness(
-                    f"Gross margin rendah: {gpm_pct:.1f}% (< {self.criteria.profitability.gpm_min}%)"
+                    f"Gross margin rendah: {gpm_pct:.1f}% (< {self.criteria.profitability.gpm_min}%)",
                 )
             details["gross_margin"] = gpm_pct
         else:
@@ -286,7 +298,7 @@ class FundamentalAnalyzer:
             else:
                 score.score += 5
                 result.add_weakness(
-                    f"ROE rendah: {roe_pct:.1f}% (< {self.criteria.profitability.roe_min}%)"
+                    f"ROE rendah: {roe_pct:.1f}% (< {self.criteria.profitability.roe_min}%)",
                 )
             details["roe"] = roe_pct
         else:
@@ -317,22 +329,25 @@ class FundamentalAnalyzer:
             result.add_weakness("Free cash flow tidak tersedia")
 
         score.details = details
-        score.passed = score.score >= 50
+        score.passed = score.score >= PASSING_SCORE_THRESHOLD
 
         return score
 
     def _analyze_risk(
-        self, stock_data: StockData, result: ScreeningResult
+        self,
+        stock_data: StockData,
+        result: ScreeningResult,
     ) -> CategoryScore:
-        """
-        Analyze risk and leverage metrics.
+        """Analyze risk and leverage metrics.
 
         Kriteria:
         - Debt-to-Equity: Prefer < 0.5, max < 1.0
         - Beta: Max 1.5
         """
         score = CategoryScore(
-            category="Risk", score=0.0, weight=self.weights.risk_weight
+            category="Risk",
+            score=0.0,
+            weight=self.weights.risk_weight,
         )
         details = {}
 
@@ -342,7 +357,7 @@ class FundamentalAnalyzer:
             if dte <= self.criteria.risk.debt_to_equity_preferred:
                 score.score += 70
                 result.add_strength(
-                    f"Debt-to-Equity sangat rendah: {dte:.2f} - leverage konservatif"
+                    f"Debt-to-Equity sangat rendah: {dte:.2f} - leverage konservatif",
                 )
             elif dte <= self.criteria.risk.debt_to_equity_max:
                 score.score += 45
@@ -356,7 +371,7 @@ class FundamentalAnalyzer:
             else:
                 score.score += 15
                 result.add_red_flag(
-                    f"Debt-to-Equity tinggi: {dte:.2f} - risiko leverage tinggi"
+                    f"Debt-to-Equity tinggi: {dte:.2f} - risiko leverage tinggi",
                 )
             details["debt_to_equity"] = dte
         else:
@@ -368,7 +383,7 @@ class FundamentalAnalyzer:
             if beta <= 1.0:
                 score.score += 30
                 result.add_strength(
-                    f"Beta rendah: {beta:.2f} - volatilitas lebih rendah dari market"
+                    f"Beta rendah: {beta:.2f} - volatilitas lebih rendah dari market",
                 )
             elif (
                 self.criteria.risk.beta_max is not None
@@ -385,7 +400,7 @@ class FundamentalAnalyzer:
             else:
                 score.score += 5
                 result.add_weakness(
-                    f"Beta tinggi: {beta:.2f} - volatilitas lebih tinggi dari market"
+                    f"Beta tinggi: {beta:.2f} - volatilitas lebih tinggi dari market",
                 )
             details["beta"] = beta
         else:
@@ -400,22 +415,25 @@ class FundamentalAnalyzer:
             )
 
         score.details = details
-        score.passed = score.score >= 50
+        score.passed = score.score >= PASSING_SCORE_THRESHOLD
 
         return score
 
     def _analyze_dividend(
-        self, stock_data: StockData, result: ScreeningResult
+        self,
+        stock_data: StockData,
+        result: ScreeningResult,
     ) -> CategoryScore:
-        """
-        Analyze dividend metrics.
+        """Analyze dividend metrics.
 
         Kriteria:
         - Dividend: Harus ada
         - Dividend Yield: Prefer ≥ 4%, min 2%
         """
         score = CategoryScore(
-            category="Dividend", score=0.0, weight=self.weights.dividend_weight
+            category="Dividend",
+            score=0.0,
+            weight=self.weights.dividend_weight,
         )
         details = {}
 
@@ -439,7 +457,7 @@ class FundamentalAnalyzer:
             else:
                 score.score += 30
                 result.add_weakness(
-                    f"Dividend yield rendah: {div_yield_pct:.2f}% (< {self.criteria.dividend.dividend_yield_min}%)"
+                    f"Dividend yield rendah: {div_yield_pct:.2f}% (< {self.criteria.dividend.dividend_yield_min}%)",
                 )
 
             details["dividend_yield"] = div_yield_pct
@@ -457,19 +475,21 @@ class FundamentalAnalyzer:
             details["has_dividend"] = False
 
         score.details = details
-        score.passed = score.score >= 40  # More lenient for dividend
+        score.passed = (
+            score.score >= DIVIDEND_PASSING_THRESHOLD
+        )  # More lenient for dividend
 
         return score
 
     def _calculate_total_score(self, metrics: ScreeningMetrics) -> float:
-        """
-        Calculate weighted total score.
+        """Calculate weighted total score.
 
         Args:
             metrics: ScreeningMetrics dengan category scores
 
         Returns:
             Weighted total score (0-100)
+
         """
         total = (
             metrics.valuation_score.score * self.weights.valuation_weight
@@ -481,14 +501,14 @@ class FundamentalAnalyzer:
         return round(total, 2)
 
     def _build_key_metrics_summary(self, stock_data: StockData) -> dict:
-        """
-        Build summary of key metrics untuk quick view.
+        """Build summary of key metrics untuk quick view.
 
         Args:
             stock_data: StockData object
 
         Returns:
             Dictionary of key metrics
+
         """
         return {
             "pe_ratio": stock_data.valuation.pe_ratio,
@@ -502,15 +522,15 @@ class FundamentalAnalyzer:
             "eps": stock_data.profitability.eps,
         }
 
-    def batch_analyze(self, stocks_data: List[StockData]) -> List[ScreeningResult]:
-        """
-        Analyze multiple stocks.
+    def batch_analyze(self, stocks_data: list[StockData]) -> list[ScreeningResult]:
+        """Analyze multiple stocks.
 
         Args:
             stocks_data: List of StockData objects
 
         Returns:
             List of ScreeningResult, sorted by score (descending)
+
         """
         results = []
 

@@ -1,5 +1,4 @@
-"""
-CLI commands untuk stock screening application.
+"""CLI commands untuk stock screening application.
 
 Module ini berisi semua command-line interface commands menggunakan Click.
 """
@@ -26,13 +25,15 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 console = Console()
 
+# Constants
+MIN_COMPARISON_TICKERS = 2
+
 
 @click.group(invoke_without_command=True)
-@click.version_option(version=__version__, prog_name='Friday Screener')
+@click.version_option(version=__version__, prog_name="Friday Screener")
 @click.pass_context
-def cli(ctx):
-    """
-    Friday Screener - Stock Screening Tool for Indonesian Market.
+def cli(ctx: click.Context) -> None:
+    """Friday Screener - Stock Screening Tool for Indonesian Market.
 
     Professional-grade stock screening tool untuk analisis fundamental
     emiten saham di Bursa Efek Indonesia.
@@ -43,21 +44,20 @@ def cli(ctx):
 
 
 @cli.command()
-@click.argument('ticker')
+@click.argument("ticker")
 @click.option(
-    '--detailed',
-    '-d',
+    "--detailed",
+    "-d",
     is_flag=True,
-    help='Show detailed analysis including all insights',
+    help="Show detailed analysis including all insights",
 )
 @click.option(
-    '--news/--no-news',
+    "--news/--no-news",
     default=True,
-    help='Include news and corporate actions (default: yes)',
+    help="Include news and corporate actions (default: yes)",
 )
-def screen(ticker: str, detailed: bool, news: bool):
-    """
-    Screen a stock ticker untuk analisis fundamental.
+def screen(ticker: str, detailed: bool, news: bool) -> None:
+    """Screen a stock ticker untuk analisis fundamental.
 
     TICKER: Kode emiten saham (contoh: BBCA, TLKM, ASII)
 
@@ -83,7 +83,7 @@ def screen(ticker: str, detailed: bool, news: bool):
     if stock_data is None:
         console.print(
             f"[bold red]Error:[/bold red] Could not fetch data for {ticker}. "
-            "Please check the ticker symbol."
+            "Please check the ticker symbol.",
         )
         return
 
@@ -119,10 +119,9 @@ def screen(ticker: str, detailed: bool, news: bool):
 
 
 @cli.command()
-@click.argument('tickers', nargs=-1, required=True)
-def compare(tickers):
-    """
-    Compare multiple stocks side by side.
+@click.argument("tickers", nargs=-1, required=True)
+def compare(tickers: tuple[str, ...]) -> None:
+    """Compare multiple stocks side by side.
 
     TICKERS: Dua atau lebih kode emiten (contoh: BBCA BMRI BBNI)
 
@@ -130,14 +129,14 @@ def compare(tickers):
 
         friday-screener compare BBCA BMRI BBNI
     """
-    if len(tickers) < 2:
+    if len(tickers) < MIN_COMPARISON_TICKERS:
         console.print(
-            "[bold red]Error:[/bold red] Please provide at least 2 tickers to compare"
+            "[bold red]Error:[/bold red] Please provide at least 2 tickers to compare",
         )
         return
 
     console.print(
-        f"\n[bold cyan]Comparing {len(tickers)} stocks...[/bold cyan]\n"
+        f"\n[bold cyan]Comparing {len(tickers)} stocks...[/bold cyan]\n",
     )
 
     # Initialize services
@@ -153,7 +152,7 @@ def compare(tickers):
 
             if stock_data is None:
                 console.print(
-                    f"[bold yellow]Warning:[/bold yellow] Could not fetch data for {ticker}, skipping..."
+                    f"[bold yellow]Warning:[/bold yellow] Could not fetch data for {ticker}, skipping...",
                 )
                 continue
 
@@ -184,7 +183,9 @@ def _display_company_info(stock_data):
         table.add_row("Industry", info.industry)
 
     panel = Panel(
-        table, title="[bold]Company Information[/bold]", border_style="blue"
+        table,
+        title="[bold]Company Information[/bold]",
+        border_style="blue",
     )
     console.print(panel)
     console.print()
@@ -193,16 +194,16 @@ def _display_company_info(stock_data):
 def _display_screening_summary(result):
     """Display screening summary with rating and score."""
     # Determine color based on rating
-    if result.rating.name == 'VERY_STRONG':
-        color = 'bold green'
-    elif result.rating.name == 'STRONG':
-        color = 'green'
-    elif result.rating.name == 'FAIR':
-        color = 'yellow'
-    elif result.rating.name == 'WEAK':
-        color = 'red'
+    if result.rating.name == "VERY_STRONG":
+        color = "bold green"
+    elif result.rating.name == "STRONG":
+        color = "green"
+    elif result.rating.name == "FAIR":
+        color = "yellow"
+    elif result.rating.name == "WEAK":
+        color = "red"
     else:
-        color = 'bold red'
+        color = "bold red"
 
     # Create summary text
     summary = Text()
@@ -211,7 +212,8 @@ def _display_screening_summary(result):
     summary.append("\nTotal Score: ", style="bold")
     summary.append(f"{result.metrics.total_score:.1f}/100", style=color)
     summary.append(
-        f"\nData Quality: {result.data_completeness:.0f}%", style="dim"
+        f"\nData Quality: {result.data_completeness:.0f}%",
+        style="dim",
     )
 
     panel = Panel(summary, title="[bold]Screening Result[/bold]", border_style=color)
@@ -263,36 +265,38 @@ def _display_key_metrics(result):
     table.add_column("Value", justify="right", style="white")
 
     # Valuation
-    if metrics.get('pe_ratio'):
-        table.add_row("PE Ratio", format_ratio(metrics['pe_ratio']))
-    if metrics.get('pbv'):
-        table.add_row("PBV", format_ratio(metrics['pbv']))
-    if metrics.get('market_cap'):
-        table.add_row("Market Cap", format_currency(metrics['market_cap']))
+    if metrics.get("pe_ratio"):
+        table.add_row("PE Ratio", format_ratio(metrics["pe_ratio"]))
+    if metrics.get("pbv"):
+        table.add_row("PBV", format_ratio(metrics["pbv"]))
+    if metrics.get("market_cap"):
+        table.add_row("Market Cap", format_currency(metrics["market_cap"]))
 
     # Profitability
-    if metrics.get('roe'):
-        table.add_row("ROE", format_percentage(metrics['roe']))
-    if metrics.get('gross_margin'):
-        table.add_row("Gross Margin", format_percentage(metrics['gross_margin']))
-    if metrics.get('eps'):
-        table.add_row("EPS", format_number(metrics['eps']))
+    if metrics.get("roe"):
+        table.add_row("ROE", format_percentage(metrics["roe"]))
+    if metrics.get("gross_margin"):
+        table.add_row("Gross Margin", format_percentage(metrics["gross_margin"]))
+    if metrics.get("eps"):
+        table.add_row("EPS", format_number(metrics["eps"]))
 
     # Risk
-    if metrics.get('debt_to_equity'):
+    if metrics.get("debt_to_equity"):
         table.add_row(
-            "Debt-to-Equity", format_ratio(metrics['debt_to_equity'])
+            "Debt-to-Equity",
+            format_ratio(metrics["debt_to_equity"]),
         )
 
     # Dividend
-    if metrics.get('dividend_yield'):
+    if metrics.get("dividend_yield"):
         table.add_row(
-            "Dividend Yield", format_percentage(metrics['dividend_yield'])
+            "Dividend Yield",
+            format_percentage(metrics["dividend_yield"]),
         )
 
     # Price
-    if metrics.get('current_price'):
-        table.add_row("Current Price", format_currency(metrics['current_price']))
+    if metrics.get("current_price"):
+        table.add_row("Current Price", format_currency(metrics["current_price"]))
 
     console.print(table)
     console.print()
@@ -328,9 +332,9 @@ def _display_news_summary(news_items, corporate_actions, news_service):
         console.print("[bold]Recent Corporate Actions:[/bold]")
         for action in corporate_actions[:5]:
             date_str = (
-                action.published_date.strftime('%Y-%m-%d')
+                action.published_date.strftime("%Y-%m-%d")
                 if action.published_date
-                else 'N/A'
+                else "N/A"
             )
             console.print(f"  [{date_str}] {action.title}")
         console.print()
@@ -344,26 +348,36 @@ def _display_news_summary(news_items, corporate_actions, news_service):
             f"  Total News: {analysis['total_news']} | "
             f"[green]Positive: {analysis['positive_count']}[/green] | "
             f"[yellow]Neutral: {analysis['neutral_count']}[/yellow] | "
-            f"[red]Negative: {analysis['negative_count']}[/red]"
+            f"[red]Negative: {analysis['negative_count']}[/red]",
         )
         console.print(
             f"  Overall Sentiment: [{_get_sentiment_color(analysis['overall_sentiment'])}]"
             f"{analysis['overall_sentiment'].upper()}"
-            f"[/{_get_sentiment_color(analysis['overall_sentiment'])}]"
+            f"[/{_get_sentiment_color(analysis['overall_sentiment'])}]",
         )
 
         # Display individual news items dengan detail
         console.print("\n[bold]Recent News:[/bold]")
         for i, news in enumerate(news_items[:5], 1):  # Show top 5 news
             sentiment_color = _get_sentiment_color(news.sentiment)
-            date_str = news.published_date.strftime('%Y-%m-%d') if news.published_date else 'N/A'
+            date_str = (
+                news.published_date.strftime("%Y-%m-%d")
+                if news.published_date
+                else "N/A"
+            )
 
-            console.print(f"\n[cyan]{i}. [{sentiment_color}]{news.sentiment.upper()}[/{sentiment_color}][/cyan] [dim]({date_str})[/dim]")
+            console.print(
+                f"\n[cyan]{i}. [{sentiment_color}]{news.sentiment.upper()}[/{sentiment_color}][/cyan] [dim]({date_str})[/dim]"
+            )
             console.print(f"   [bold]{news.title}[/bold]")
 
             if news.summary:
                 # Truncate summary jika terlalu panjang
-                summary = news.summary[:200] + "..." if len(news.summary) > 200 else news.summary
+                summary = (
+                    news.summary[:200] + "..."
+                    if len(news.summary) > 200
+                    else news.summary
+                )
                 console.print(f"   [dim]{summary}[/dim]")
 
         console.print()
@@ -380,7 +394,7 @@ def _display_recommendation(result):
                 f"[dim]Disclaimer: Ini bukan rekomendasi investasi. Lakukan riset sendiri dan konsultasi dengan financial advisor.[/dim]",
                 title="Screening Summary",
                 border_style="green",
-            )
+            ),
         )
     else:
         console.print(
@@ -391,7 +405,7 @@ def _display_recommendation(result):
                 f"[dim]Disclaimer: Ini bukan rekomendasi investasi. Lakukan riset sendiri dan konsultasi dengan financial advisor.[/dim]",
                 title="Screening Summary",
                 border_style="yellow",
-            )
+            ),
         )
 
 
@@ -415,11 +429,11 @@ def _display_comparison_table(results):
         rating_str = str(result.rating).split()[0]  # Get first word
 
         # Get metrics
-        pe = format_ratio(result.key_metrics.get('pe_ratio'))
-        pbv = format_ratio(result.key_metrics.get('pbv'))
-        roe = format_percentage(result.key_metrics.get('roe'))
-        de = format_ratio(result.key_metrics.get('debt_to_equity'))
-        div_yield = format_percentage(result.key_metrics.get('dividend_yield'))
+        pe = format_ratio(result.key_metrics.get("pe_ratio"))
+        pbv = format_ratio(result.key_metrics.get("pbv"))
+        roe = format_percentage(result.key_metrics.get("roe"))
+        de = format_ratio(result.key_metrics.get("debt_to_equity"))
+        div_yield = format_percentage(result.key_metrics.get("dividend_yield"))
 
         # Color code score
         score = result.metrics.total_score
@@ -431,7 +445,15 @@ def _display_comparison_table(results):
             score_str = f"[red]{score:.1f}[/red]"
 
         table.add_row(
-            ticker, company, rating_str, score_str, pe, pbv, roe, de, div_yield
+            ticker,
+            company,
+            rating_str,
+            score_str,
+            pe,
+            pbv,
+            roe,
+            de,
+            div_yield,
         )
 
     console.print(table)
@@ -439,18 +461,16 @@ def _display_comparison_table(results):
 
 def _get_sentiment_color(sentiment: str) -> str:
     """Get color for sentiment."""
-    if sentiment == 'positive':
-        return 'green'
-    elif sentiment == 'negative':
-        return 'red'
-    else:
-        return 'yellow'
+    if sentiment == "positive":
+        return "green"
+    if sentiment == "negative":
+        return "red"
+    return "yellow"
 
 
 @cli.command()
 def interactive():
-    """
-    Interactive mode - prompt user untuk input.
+    """Interactive mode - prompt user untuk input.
 
     Mode ini akan memandu user step-by-step untuk screening saham.
     """
@@ -462,7 +482,7 @@ def interactive():
             "Stock Screening Tool untuk Bursa Efek Indonesia\n\n"
             "[dim]Professional-grade fundamental analysis[/dim]",
             border_style="cyan",
-        )
+        ),
     )
     console.print()
 
@@ -474,32 +494,50 @@ def interactive():
         console.print("  [cyan]q[/cyan] - Quit")
         console.print()
 
-        mode = console.input("[bold green]Pilihan Anda[/bold green] [dim](default: 1)[/dim]: ").strip().lower()
+        mode = (
+            console.input(
+                "[bold green]Pilihan Anda[/bold green] [dim](default: 1)[/dim]: "
+            )
+            .strip()
+            .lower()
+        )
 
         # Default to 1 if empty
         if not mode:
             mode = "1"
 
-        if mode in ['q', 'quit', 'exit']:
-            console.print("\n[bold cyan]Terima kasih telah menggunakan Friday Screener! 👋[/bold cyan]\n")
+        if mode in ["q", "quit", "exit"]:
+            console.print(
+                "\n[bold cyan]Terima kasih telah menggunakan Friday Screener! 👋[/bold cyan]\n"
+            )
             break
 
-        if mode == '1':
+        if mode == "1":
             # Single stock screening
             _interactive_single_screen()
-        elif mode == '2':
+        elif mode == "2":
             # Multiple stock comparison
             _interactive_compare()
         else:
-            console.print("[red]❌ Pilihan tidak valid. Silakan pilih 1, 2, atau q[/red]\n")
+            console.print(
+                "[red]❌ Pilihan tidak valid. Silakan pilih 1, 2, atau q[/red]\n"
+            )
             continue
 
         # Ask to continue
         console.print()
-        continue_input = console.input("[bold green]Lakukan screening lagi?[/bold green] [dim](Y/n)[/dim]: ").strip().lower()
+        continue_input = (
+            console.input(
+                "[bold green]Lakukan screening lagi?[/bold green] [dim](Y/n)[/dim]: "
+            )
+            .strip()
+            .lower()
+        )
 
-        if continue_input in ['n', 'no']:
-            console.print("\n[bold cyan]Terima kasih telah menggunakan Friday Screener! 👋[/bold cyan]\n")
+        if continue_input in ["n", "no"]:
+            console.print(
+                "\n[bold cyan]Terima kasih telah menggunakan Friday Screener! 👋[/bold cyan]\n"
+            )
             break
         console.print()
 
@@ -509,7 +547,13 @@ def _interactive_single_screen():
     console.print()
 
     # Use Rich console.input for colored prompts
-    ticker = console.input("[bold cyan]Masukkan ticker saham[/bold cyan] [dim](contoh: BBCA, TLKM)[/dim]: ").strip().upper()
+    ticker = (
+        console.input(
+            "[bold cyan]Masukkan ticker saham[/bold cyan] [dim](contoh: BBCA, TLKM)[/dim]: "
+        )
+        .strip()
+        .upper()
+    )
 
     if not ticker:
         console.print("[red]Ticker tidak boleh kosong![/red]")
@@ -517,11 +561,23 @@ def _interactive_single_screen():
 
     # Options with colored prompts
     console.print()
-    detailed_input = console.input("[bold yellow]Tampilkan detailed analysis?[/bold yellow] [dim](y/N)[/dim]: ").strip().lower()
-    detailed = detailed_input in ['y', 'yes']
+    detailed_input = (
+        console.input(
+            "[bold yellow]Tampilkan detailed analysis?[/bold yellow] [dim](y/N)[/dim]: "
+        )
+        .strip()
+        .lower()
+    )
+    detailed = detailed_input in ["y", "yes"]
 
-    news_input = console.input("[bold yellow]Include news & corporate actions?[/bold yellow] [dim](Y/n)[/dim]: ").strip().lower()
-    include_news = news_input not in ['n', 'no']
+    news_input = (
+        console.input(
+            "[bold yellow]Include news & corporate actions?[/bold yellow] [dim](Y/n)[/dim]: "
+        )
+        .strip()
+        .lower()
+    )
+    include_news = news_input not in ["n", "no"]
 
     console.print()
 
@@ -533,11 +589,15 @@ def _interactive_single_screen():
 def _interactive_compare():
     """Interactive mode untuk comparing stocks."""
     console.print()
-    console.print("[dim]Masukkan ticker dipisahkan dengan spasi (contoh: BBCA BMRI BBNI)[/dim]")
+    console.print(
+        "[dim]Masukkan ticker dipisahkan dengan spasi (contoh: BBCA BMRI BBNI)[/dim]"
+    )
     console.print()
 
     # Use Rich console.input for colored prompts
-    tickers_input = console.input("[bold cyan]Masukkan tickers[/bold cyan]: ").strip().upper()
+    tickers_input = (
+        console.input("[bold cyan]Masukkan tickers[/bold cyan]: ").strip().upper()
+    )
 
     if not tickers_input:
         console.print("[red]Tickers tidak boleh kosong![/red]")
@@ -546,7 +606,7 @@ def _interactive_compare():
     # Parse tickers
     tickers = tuple(tickers_input.split())
 
-    if len(tickers) < 2:
+    if len(tickers) < MIN_COMPARISON_TICKERS:
         console.print("[red]Error: Minimal 2 ticker untuk comparison[/red]")
         return
 
@@ -557,5 +617,5 @@ def _interactive_compare():
     ctx.invoke(compare, tickers=tickers)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()

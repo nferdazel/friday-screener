@@ -1,12 +1,10 @@
-"""
-Configuration settings for stock screening criteria and thresholds.
+"""Configuration settings for stock screening criteria and thresholds.
 
 This module contains all the screening criteria thresholds that can be adjusted
 based on market conditions or user preferences.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -57,7 +55,7 @@ class RiskCriteria:
     debt_to_equity_preferred: float = 0.5  # Preferred < 0.5
 
     # Beta (volatilitas)
-    beta_max: Optional[float] = 1.5  # Maksimal 1.5x volatilitas pasar
+    beta_max: float | None = 1.5  # Maksimal 1.5x volatilitas pasar
 
 
 @dataclass
