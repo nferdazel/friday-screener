@@ -148,4 +148,4 @@ jobs:
             artifacts/friday-screener-windows-amd64.exe/friday-screener-windows.exe
             artifacts/friday-screener-macos-amd64/friday-screener-macos
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
