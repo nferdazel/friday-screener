@@ -305,10 +305,7 @@ class YahooFinanceService:
         Returns:
             Score 0-100 indicating data completeness
         """
-        total_fields = 0
-        filled_fields = 0
-
-        # Critical fields for screening
+        # Critical fields for screening (weight: 1.0 each)
         critical_fields = [
             valuation.pe_ratio,
             valuation.price_to_book,
@@ -320,29 +317,38 @@ class YahooFinanceService:
             cash_flow.operating_cash_flow,
         ]
 
-        for field in critical_fields:
-            total_fields += 1
-            if field is not None:
-                filled_fields += 1
-
-        # Additional important fields
+        # Additional important fields (weight: 0.5 each)
         additional_fields = [
             valuation.forward_pe,
-            profitability.profit_margin,
+            valuation.profit_margin,
             profitability.operating_margin,
             cash_flow.free_cash_flow,
             dividend.dividend_yield,
         ]
 
-        for field in additional_fields:
-            total_fields += 1
-            if field is not None:
-                filled_fields += 0.5  # Weight less than critical fields
+        # Calculate weighted score
+        critical_weight = 1.0
+        additional_weight = 0.5
 
-        if total_fields == 0:
+        total_weight = 0
+        achieved_weight = 0
+
+        # Process critical fields
+        for field in critical_fields:
+            total_weight += critical_weight
+            if field is not None:
+                achieved_weight += critical_weight
+
+        # Process additional fields
+        for field in additional_fields:
+            total_weight += additional_weight
+            if field is not None:
+                achieved_weight += additional_weight
+
+        if total_weight == 0:
             return 0.0
 
-        quality_score = (filled_fields / total_fields) * 100
+        quality_score = (achieved_weight / total_weight) * 100
         return min(quality_score, 100.0)
 
     def clear_cache(self) -> None:
