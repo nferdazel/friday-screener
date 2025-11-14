@@ -8,7 +8,7 @@ termasuk score, rating, dan insights.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 class Rating(Enum):
@@ -43,7 +43,7 @@ class CategoryScore:
     max_score: float = 100.0
     weight: float = 0.0
     passed: bool = False
-    details: Dict[str, any] = field(default_factory=dict)
+    details: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -61,7 +61,9 @@ class ScreeningMetrics:
     profitability_score: CategoryScore = field(
         default_factory=lambda: CategoryScore("Profitability", 0.0)
     )
-    risk_score: CategoryScore = field(default_factory=lambda: CategoryScore("Risk", 0.0))
+    risk_score: CategoryScore = field(
+        default_factory=lambda: CategoryScore("Risk", 0.0)
+    )
     dividend_score: CategoryScore = field(
         default_factory=lambda: CategoryScore("Dividend", 0.0)
     )
@@ -112,7 +114,7 @@ class ScreeningResult:
     weaknesses: List[str] = field(default_factory=list)
 
     # Key metrics summary (untuk quick view)
-    key_metrics: Dict[str, any] = field(default_factory=dict)
+    key_metrics: Dict[str, Any] = field(default_factory=dict)
 
     # Metadata
     screened_at: datetime = field(default_factory=datetime.now)
