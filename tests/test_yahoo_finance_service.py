@@ -24,23 +24,23 @@ class TestYahooFinanceService:
     def mock_yfinance_info(self):
         """Mock yfinance info data."""
         return {
-            'symbol': 'BBCA.JK',
-            'shortName': 'Bank Central Asia Tbk',
-            'longName': 'PT Bank Central Asia Tbk',
-            'sector': 'Financial Services',
-            'industry': 'Banks - Regional',
-            'currentPrice': 10000,
-            'marketCap': 1234567890000,
-            'trailingPE': 12.5,
-            'priceToBook': 3.2,
-            'returnOnEquity': 0.18,
-            'profitMargins': 0.35,
-            'debtToEquity': 45.5,
-            'beta': 0.95,
-            'dividendYield': 0.025,
-            'trailingEps': 800,
-            'operatingCashflow': 50000000000,
-            'freeCashflow': 40000000000,
+            "symbol": "BBCA.JK",
+            "shortName": "Bank Central Asia Tbk",
+            "longName": "PT Bank Central Asia Tbk",
+            "sector": "Financial Services",
+            "industry": "Banks - Regional",
+            "currentPrice": 10000,
+            "marketCap": 1234567890000,
+            "trailingPE": 12.5,
+            "priceToBook": 3.2,
+            "returnOnEquity": 0.18,
+            "profitMargins": 0.35,
+            "debtToEquity": 45.5,
+            "beta": 0.95,
+            "dividendYield": 0.025,
+            "trailingEps": 800,
+            "operatingCashflow": 50000000000,
+            "freeCashflow": 40000000000,
         }
 
     @pytest.fixture
@@ -61,14 +61,14 @@ class TestYahooFinanceService:
 
     def test_get_stock_data_success(self, service, mock_ticker):
         """Test successful stock data fetching."""
-        with patch('yfinance.Ticker', return_value=mock_ticker):
-            result = service.get_stock_data('BBCA')
+        with patch("yfinance.Ticker", return_value=mock_ticker):
+            result = service.get_stock_data("BBCA")
 
             assert result is not None
             assert isinstance(result, StockData)
-            assert result.get_ticker() == 'BBCA.JK'
-            assert result.company_info.name == 'PT Bank Central Asia Tbk'
-            assert result.company_info.sector == 'Financial Services'
+            assert result.get_ticker() == "BBCA.JK"
+            assert result.company_info.name == "PT Bank Central Asia Tbk"
+            assert result.company_info.sector == "Financial Services"
             assert result.price.current_price == 10000
             assert result.valuation.pe_ratio == 12.5
             assert result.valuation.price_to_book == 3.2
@@ -79,42 +79,42 @@ class TestYahooFinanceService:
 
     def test_get_stock_data_with_normalized_ticker(self, service, mock_ticker):
         """Test fetching with various ticker formats."""
-        with patch('yfinance.Ticker', return_value=mock_ticker):
+        with patch("yfinance.Ticker", return_value=mock_ticker):
             # Test without .JK suffix
-            result1 = service.get_stock_data('BBCA')
+            result1 = service.get_stock_data("BBCA")
             assert result1 is not None
-            assert result1.get_ticker() == 'BBCA.JK'
+            assert result1.get_ticker() == "BBCA.JK"
 
             # Test with .JK suffix already
-            result2 = service.get_stock_data('BBCA.JK')
+            result2 = service.get_stock_data("BBCA.JK")
             assert result2 is not None
-            assert result2.get_ticker() == 'BBCA.JK'
+            assert result2.get_ticker() == "BBCA.JK"
 
     def test_get_stock_data_invalid_ticker(self, service):
         """Test fetching with invalid ticker."""
         mock_ticker = MagicMock()
         mock_ticker.info = {}  # Empty info
 
-        with patch('yfinance.Ticker', return_value=mock_ticker):
-            result = service.get_stock_data('INVALID')
+        with patch("yfinance.Ticker", return_value=mock_ticker):
+            result = service.get_stock_data("INVALID")
             assert result is None
 
     def test_get_stock_data_api_error(self, service):
         """Test handling of API errors."""
-        with patch('yfinance.Ticker', side_effect=Exception('API Error')):
-            result = service.get_stock_data('BBCA')
+        with patch("yfinance.Ticker", side_effect=Exception("API Error")):
+            result = service.get_stock_data("BBCA")
             assert result is None
 
     def test_caching_mechanism(self, service, mock_ticker):
         """Test that caching works properly."""
-        with patch('yfinance.Ticker', return_value=mock_ticker) as mock_yf:
+        with patch("yfinance.Ticker", return_value=mock_ticker) as mock_yf:
             # First call should hit API
-            result1 = service.get_stock_data('BBCA', use_cache=True)
+            result1 = service.get_stock_data("BBCA", use_cache=True)
             assert result1 is not None
             assert mock_yf.call_count == 1
 
             # Second call should use cache
-            result2 = service.get_stock_data('BBCA', use_cache=True)
+            result2 = service.get_stock_data("BBCA", use_cache=True)
             assert result2 is not None
             assert mock_yf.call_count == 1  # Still 1, didn't call API again
 
@@ -123,13 +123,13 @@ class TestYahooFinanceService:
 
     def test_cache_bypass(self, service, mock_ticker):
         """Test that cache can be bypassed."""
-        with patch('yfinance.Ticker', return_value=mock_ticker) as mock_yf:
+        with patch("yfinance.Ticker", return_value=mock_ticker) as mock_yf:
             # First call
-            result1 = service.get_stock_data('BBCA', use_cache=False)
+            result1 = service.get_stock_data("BBCA", use_cache=False)
             assert mock_yf.call_count == 1
 
             # Second call with use_cache=False should hit API again
-            result2 = service.get_stock_data('BBCA', use_cache=False)
+            result2 = service.get_stock_data("BBCA", use_cache=False)
             assert mock_yf.call_count == 2
 
     def test_missing_optional_fields(self, service):
@@ -137,17 +137,17 @@ class TestYahooFinanceService:
         # Mock with minimal required fields only
         mock_ticker = MagicMock()
         mock_ticker.info = {
-            'symbol': 'TEST.JK',
-            'shortName': 'Test Company',
-            'currentPrice': 1000,
+            "symbol": "TEST.JK",
+            "shortName": "Test Company",
+            "currentPrice": 1000,
             # Missing many optional fields
         }
 
-        with patch('yfinance.Ticker', return_value=mock_ticker):
-            result = service.get_stock_data('TEST')
+        with patch("yfinance.Ticker", return_value=mock_ticker):
+            result = service.get_stock_data("TEST")
 
             assert result is not None
-            assert result.company_info.name == 'Test Company'
+            assert result.company_info.name == "Test Company"
             assert result.price.current_price == 1000
             # Optional fields should be None
             assert result.valuation.pe_ratio is None
@@ -157,16 +157,16 @@ class TestYahooFinanceService:
         """Test handling of negative financial values."""
         mock_ticker = MagicMock()
         mock_ticker.info = {
-            'symbol': 'LOSS.JK',
-            'shortName': 'Loss Maker',
-            'currentPrice': 500,
-            'trailingEps': -100,  # Negative EPS
-            'returnOnEquity': -0.05,  # Negative ROE
-            'freeCashflow': -1000000,  # Negative FCF
+            "symbol": "LOSS.JK",
+            "shortName": "Loss Maker",
+            "currentPrice": 500,
+            "trailingEps": -100,  # Negative EPS
+            "returnOnEquity": -0.05,  # Negative ROE
+            "freeCashflow": -1000000,  # Negative FCF
         }
 
-        with patch('yfinance.Ticker', return_value=mock_ticker):
-            result = service.get_stock_data('LOSS')
+        with patch("yfinance.Ticker", return_value=mock_ticker):
+            result = service.get_stock_data("LOSS")
 
             assert result is not None
             assert result.profitability.eps == -100
@@ -175,11 +175,11 @@ class TestYahooFinanceService:
 
     def test_multiple_stocks_caching(self, service, mock_ticker):
         """Test caching with multiple different stocks."""
-        with patch('yfinance.Ticker', return_value=mock_ticker) as mock_yf:
+        with patch("yfinance.Ticker", return_value=mock_ticker) as mock_yf:
             # Fetch multiple different stocks
-            result1 = service.get_stock_data('BBCA')
-            result2 = service.get_stock_data('BMRI')
-            result3 = service.get_stock_data('BBCA')  # Should use cache
+            result1 = service.get_stock_data("BBCA")
+            result2 = service.get_stock_data("BMRI")
+            result3 = service.get_stock_data("BBCA")  # Should use cache
 
             assert result1 is not None
             assert result2 is not None
@@ -189,29 +189,32 @@ class TestYahooFinanceService:
             assert mock_yf.call_count == 2
 
             # Verify cache hit for BBCA
-            assert 'BBCA.JK' in service.cache
-            assert 'BMRI.JK' in service.cache
+            assert "BBCA.JK" in service.cache
+            assert "BMRI.JK" in service.cache
 
     def test_get_eps_history_with_earnings(self, service):
         """Test _get_eps_history dengan earnings data."""
         import pandas as pd
+
         mock_ticker = MagicMock()
-        
+
         # Mock financials - harus tidak None dan tidak empty
-        mock_financials = pd.DataFrame({
-            'Revenue': [1000000, 1100000, 1200000, 1300000, 1400000]
-        }, index=[pd.Timestamp(f'{year}-01-01') for year in range(2020, 2025)])
-        
+        mock_financials = pd.DataFrame(
+            {"Revenue": [1000000, 1100000, 1200000, 1300000, 1400000]},
+            index=[pd.Timestamp(f"{year}-01-01") for year in range(2020, 2025)],
+        )
+
         # Mock earnings DataFrame
-        mock_earnings = pd.DataFrame({
-            'Earnings': [800, 850, 900, 950, 1000]
-        }, index=[pd.Timestamp(f'{year}-01-01') for year in range(2020, 2025)])
-        
+        mock_earnings = pd.DataFrame(
+            {"Earnings": [800, 850, 900, 950, 1000]},
+            index=[pd.Timestamp(f"{year}-01-01") for year in range(2020, 2025)],
+        )
+
         mock_ticker.financials = mock_financials
         mock_ticker.earnings = mock_earnings
 
         eps_history = service._get_eps_history(mock_ticker)
-        
+
         assert len(eps_history) > 0
         assert all(isinstance(year, int) for year in eps_history.keys())
 
@@ -219,17 +222,19 @@ class TestYahooFinanceService:
         """Test _get_eps_history dengan timestamp index."""
         import pandas as pd
         from datetime import datetime
+
         mock_ticker = MagicMock()
-        
+
         # Mock financials - harus tidak None dan tidak empty
-        mock_financials = pd.DataFrame({
-            'Revenue': [1000000, 1100000]
-        }, index=[datetime(2023, 1, 1), datetime(2024, 1, 1)])
-        
-        mock_earnings = pd.DataFrame({
-            'Earnings': [800, 850]
-        }, index=[datetime(2023, 1, 1), datetime(2024, 1, 1)])
-        
+        mock_financials = pd.DataFrame(
+            {"Revenue": [1000000, 1100000]},
+            index=[datetime(2023, 1, 1), datetime(2024, 1, 1)],
+        )
+
+        mock_earnings = pd.DataFrame(
+            {"Earnings": [800, 850]}, index=[datetime(2023, 1, 1), datetime(2024, 1, 1)]
+        )
+
         mock_ticker.financials = mock_financials
         mock_ticker.earnings = mock_earnings
 
@@ -239,11 +244,12 @@ class TestYahooFinanceService:
     def test_get_eps_history_with_string_year(self, service):
         """Test _get_eps_history dengan string year."""
         mock_ticker = MagicMock()
-        
+
         import pandas as pd
-        mock_earnings = pd.DataFrame({
-            'Earnings': [800]
-        }, index=[pd.Index(['2024-01-01'])])
+
+        mock_earnings = pd.DataFrame(
+            {"Earnings": [800]}, index=[pd.Index(["2024-01-01"])]
+        )
 
         mock_ticker.earnings = mock_earnings
 
@@ -256,6 +262,7 @@ class TestYahooFinanceService:
         mock_ticker = MagicMock()
         mock_ticker.earnings = None
         mock_ticker.financials = None
+        mock_ticker.info = {}  # No trailing EPS
 
         eps_history = service._get_eps_history(mock_ticker)
         assert eps_history == {}
@@ -265,6 +272,7 @@ class TestYahooFinanceService:
         mock_ticker = MagicMock()
         mock_ticker.earnings.side_effect = Exception("Error")
         mock_ticker.financials = None
+        mock_ticker.info = {}  # No trailing EPS
 
         eps_history = service._get_eps_history(mock_ticker)
         assert eps_history == {}
@@ -278,7 +286,7 @@ class TestYahooFinanceService:
             LeverageMetrics,
             DividendMetrics,
         )
-        
+
         # All None values
         valuation = ValuationMetrics()
         profitability = ProfitabilityMetrics()
@@ -293,8 +301,8 @@ class TestYahooFinanceService:
 
     def test_clear_cache(self, service, mock_ticker):
         """Test clear_cache method."""
-        with patch('yfinance.Ticker', return_value=mock_ticker):
-            service.get_stock_data('BBCA')
+        with patch("yfinance.Ticker", return_value=mock_ticker):
+            service.get_stock_data("BBCA")
             assert len(service.cache) > 0
 
             service.clear_cache()
@@ -302,19 +310,19 @@ class TestYahooFinanceService:
 
     def test_get_multiple_stocks(self, service, mock_ticker):
         """Test get_multiple_stocks method."""
-        with patch('yfinance.Ticker', return_value=mock_ticker):
-            results = service.get_multiple_stocks(['BBCA', 'BMRI'])
+        with patch("yfinance.Ticker", return_value=mock_ticker):
+            results = service.get_multiple_stocks(["BBCA", "BMRI"])
 
-            assert 'BBCA' in results or 'BBCA.JK' in results
+            assert "BBCA" in results or "BBCA.JK" in results
             assert len(results) == 2
 
     def test_get_multiple_stocks_with_cache(self, service, mock_ticker):
         """Test get_multiple_stocks dengan cache."""
-        with patch('yfinance.Ticker', return_value=mock_ticker) as mock_yf:
+        with patch("yfinance.Ticker", return_value=mock_ticker) as mock_yf:
             # First call
-            results1 = service.get_multiple_stocks(['BBCA'], use_cache=True)
+            results1 = service.get_multiple_stocks(["BBCA"], use_cache=True)
             assert mock_yf.call_count == 1
 
             # Second call with cache
-            results2 = service.get_multiple_stocks(['BBCA'], use_cache=True)
+            results2 = service.get_multiple_stocks(["BBCA"], use_cache=True)
             assert mock_yf.call_count == 1  # Should use cache
