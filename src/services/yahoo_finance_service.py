@@ -25,8 +25,8 @@ from src.utils.helpers import normalize_ticker, safe_float, safe_int
 from src.utils.logger import get_logger
 
 # Suppress yfinance deprecation warnings
-warnings.filterwarnings('ignore', category=DeprecationWarning)
-warnings.simplefilter('ignore')
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.simplefilter("ignore")
 
 logger = get_logger(__name__)
 
@@ -66,7 +66,7 @@ class YahooFinanceService:
 
             # Fetch all data
             info = stock.info
-            if not info or 'symbol' not in info:
+            if not info or "symbol" not in info:
                 logger.error(f"Failed to fetch data for {normalized_ticker}")
                 return None
 
@@ -83,9 +83,7 @@ class YahooFinanceService:
             logger.error(f"Error fetching data for {normalized_ticker}: {str(e)}")
             return None
 
-    def _build_stock_data(
-        self, stock: yf.Ticker, info: dict, ticker: str
-    ) -> StockData:
+    def _build_stock_data(self, stock: yf.Ticker, info: dict, ticker: str) -> StockData:
         """
         Build StockData object dari yfinance data.
 
@@ -100,79 +98,79 @@ class YahooFinanceService:
         # Company Info
         company_info = CompanyInfo(
             ticker=ticker,
-            name=info.get('longName', info.get('shortName', ticker)),
-            sector=info.get('sector'),
-            industry=info.get('industry'),
-            description=info.get('longBusinessSummary'),
-            website=info.get('website'),
-            country=info.get('country'),
+            name=info.get("longName", info.get("shortName", ticker)),
+            sector=info.get("sector"),
+            industry=info.get("industry"),
+            description=info.get("longBusinessSummary"),
+            website=info.get("website"),
+            country=info.get("country"),
         )
 
         # Valuation Metrics
         valuation = ValuationMetrics(
-            market_cap=safe_float(info.get('marketCap')),
-            enterprise_value=safe_float(info.get('enterpriseValue')),
-            pe_ratio=safe_float(info.get('trailingPE')),
-            forward_pe=safe_float(info.get('forwardPE')),
-            peg_ratio=safe_float(info.get('pegRatio')),
-            price_to_book=safe_float(info.get('priceToBook')),
-            price_to_sales=safe_float(info.get('priceToSalesTrailing12Months')),
-            shares_outstanding=safe_float(info.get('sharesOutstanding')),
+            market_cap=safe_float(info.get("marketCap")),
+            enterprise_value=safe_float(info.get("enterpriseValue")),
+            pe_ratio=safe_float(info.get("trailingPE")),
+            forward_pe=safe_float(info.get("forwardPE")),
+            peg_ratio=safe_float(info.get("pegRatio")),
+            price_to_book=safe_float(info.get("priceToBook")),
+            price_to_sales=safe_float(info.get("priceToSalesTrailing12Months")),
+            shares_outstanding=safe_float(info.get("sharesOutstanding")),
         )
 
         # Profitability Metrics
         profitability = ProfitabilityMetrics(
-            revenue=safe_float(info.get('totalRevenue')),
-            gross_profit=safe_float(info.get('grossProfits')),
-            operating_income=safe_float(info.get('operatingIncome')),
-            net_income=safe_float(info.get('netIncomeToCommon')),
-            eps=safe_float(info.get('trailingEps')),
-            gross_margin=safe_float(info.get('grossMargins')),
-            operating_margin=safe_float(info.get('operatingMargins')),
-            profit_margin=safe_float(info.get('profitMargins')),
-            roe=safe_float(info.get('returnOnEquity')),
-            roa=safe_float(info.get('returnOnAssets')),
+            revenue=safe_float(info.get("totalRevenue")),
+            gross_profit=safe_float(info.get("grossProfits")),
+            operating_income=safe_float(info.get("operatingIncome")),
+            net_income=safe_float(info.get("netIncomeToCommon")),
+            eps=safe_float(info.get("trailingEps")),
+            gross_margin=safe_float(info.get("grossMargins")),
+            operating_margin=safe_float(info.get("operatingMargins")),
+            profit_margin=safe_float(info.get("profitMargins")),
+            roe=safe_float(info.get("returnOnEquity")),
+            roa=safe_float(info.get("returnOnAssets")),
             eps_history=self._get_eps_history(stock),
         )
 
         # Cash Flow Metrics
         cash_flow = CashFlowMetrics(
-            operating_cash_flow=safe_float(info.get('operatingCashflow')),
-            free_cash_flow=safe_float(info.get('freeCashflow')),
-            levered_free_cash_flow=safe_float(info.get('leveredFreeCashflow')),
+            operating_cash_flow=safe_float(info.get("operatingCashflow")),
+            free_cash_flow=safe_float(info.get("freeCashflow")),
+            levered_free_cash_flow=safe_float(info.get("leveredFreeCashflow")),
         )
 
         # Leverage Metrics
         leverage = LeverageMetrics(
-            total_debt=safe_float(info.get('totalDebt')),
-            total_equity=safe_float(info.get('totalStockholderEquity')),
-            debt_to_equity=safe_float(info.get('debtToEquity')),
-            current_ratio=safe_float(info.get('currentRatio')),
-            quick_ratio=safe_float(info.get('quickRatio')),
-            beta=safe_float(info.get('beta')),
+            total_debt=safe_float(info.get("totalDebt")),
+            total_equity=safe_float(info.get("totalStockholderEquity")),
+            debt_to_equity=safe_float(info.get("debtToEquity")),
+            current_ratio=safe_float(info.get("currentRatio")),
+            quick_ratio=safe_float(info.get("quickRatio")),
+            beta=safe_float(info.get("beta")),
         )
 
         # Dividend Metrics
         dividend = DividendMetrics(
-            dividend_rate=safe_float(info.get('dividendRate')),
-            dividend_yield=safe_float(info.get('dividendYield')),
-            payout_ratio=safe_float(info.get('payoutRatio')),
+            dividend_rate=safe_float(info.get("dividendRate")),
+            dividend_yield=safe_float(info.get("dividendYield")),
+            payout_ratio=safe_float(info.get("payoutRatio")),
             five_year_avg_dividend_yield=safe_float(
-                info.get('fiveYearAvgDividendYield')
+                info.get("fiveYearAvgDividendYield")
             ),
         )
 
         # Price Metrics
         price = PriceMetrics(
-            current_price=safe_float(info.get('currentPrice')),
-            previous_close=safe_float(info.get('previousClose')),
-            open_price=safe_float(info.get('open')),
-            day_high=safe_float(info.get('dayHigh')),
-            day_low=safe_float(info.get('dayLow')),
-            fifty_two_week_high=safe_float(info.get('fiftyTwoWeekHigh')),
-            fifty_two_week_low=safe_float(info.get('fiftyTwoWeekLow')),
-            volume=safe_int(info.get('volume')),
-            avg_volume=safe_int(info.get('averageVolume')),
+            current_price=safe_float(info.get("currentPrice")),
+            previous_close=safe_float(info.get("previousClose")),
+            open_price=safe_float(info.get("open")),
+            day_high=safe_float(info.get("dayHigh")),
+            day_low=safe_float(info.get("dayLow")),
+            fifty_two_week_high=safe_float(info.get("fiftyTwoWeekHigh")),
+            fifty_two_week_low=safe_float(info.get("fiftyTwoWeekLow")),
+            volume=safe_int(info.get("volume")),
+            avg_volume=safe_int(info.get("averageVolume")),
         )
 
         # Calculate data quality score
@@ -208,25 +206,82 @@ class YahooFinanceService:
         eps_history = {}
 
         try:
-            # Get financials (annual)
-            financials = stock.financials
+            # Method 1: Try earnings data first
+            earnings = stock.earnings
+            if earnings is not None and not earnings.empty:
+                logger.debug(
+                    f"Earnings data available with columns: {earnings.columns.tolist()}"
+                )
 
-            if financials is not None and not financials.empty:
-                # Get EPS from Net Income / Shares Outstanding
-                # Or use earnings history if available
-                earnings = stock.earnings
+                # Try different possible column names
+                eps_column = None
+                for col in ["Earnings", "EPS", "Earnings Per Share"]:
+                    if col in earnings.columns:
+                        eps_column = col
+                        break
 
-                if earnings is not None and not earnings.empty:
+                if eps_column:
                     for year in earnings.index:
-                        eps = safe_float(earnings.loc[year, 'Earnings'])
+                        eps = safe_float(earnings.loc[year, eps_column])
                         if eps is not None:
                             # Convert to year if it's a timestamp
                             year_int = (
                                 year.year
-                                if hasattr(year, 'year')
+                                if hasattr(year, "year")
                                 else int(str(year)[:4])
                             )
                             eps_history[year_int] = eps
+                    logger.debug(f"EPS history from earnings data: {eps_history}")
+                else:
+                    logger.debug("No EPS column found in earnings data")
+
+            # Method 2: Calculate EPS from financials if earnings data not available
+            if not eps_history:
+                financials = stock.financials
+                shares = stock.info.get("sharesOutstanding")
+
+                if (
+                    financials is not None
+                    and not financials.empty
+                    and shares is not None
+                    and shares > 0
+                ):
+                    # Try to get Net Income from financials
+                    net_income_col = None
+                    for col in [
+                        "Net Income",
+                        "Net Income Applicable To Common Shares",
+                        "NetIncome",
+                    ]:
+                        if col in financials.index:
+                            net_income_col = col
+                            break
+
+                    if net_income_col:
+                        for year in financials.columns:
+                            if hasattr(year, "year"):
+                                year_int = year.year
+                            else:
+                                year_int = int(str(year)[:4])
+
+                            net_income = safe_float(
+                                financials.loc[net_income_col, year]
+                            )
+                            if net_income is not None:
+                                eps = net_income / shares
+                                eps_history[year_int] = eps
+
+                        logger.debug(
+                            f"EPS history calculated from financials: {eps_history}"
+                        )
+
+            # Method 3: Use trailing EPS as fallback for current year
+            if not eps_history:
+                trailing_eps = stock.info.get("trailingEps")
+                if trailing_eps is not None:
+                    current_year = datetime.now().year
+                    eps_history[current_year] = trailing_eps
+                    logger.debug(f"Using trailing EPS as fallback: {trailing_eps}")
 
         except Exception as e:
             logger.warning(f"Could not fetch EPS history: {str(e)}")
